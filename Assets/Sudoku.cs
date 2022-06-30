@@ -128,11 +128,11 @@ public class Sudoku : MonoBehaviour {
 	//IMPLEMENTAR - punto 3
 	IEnumerator ShowSequence(List<Matrix<int>> seq)
     {
-        yield return new WaitForSeconds(stepDuration);
+        yield return new WaitForSeconds(0.1f);
 
         if (seq.Count > 0)
         {
-            TranslateAllValues(seq[0]);
+            TranslateAllValuesNonSetter(seq[0]);
             seq.RemoveAt(0);
             feedback.text = "Pasos: " + (maxCount - seq.Count).ToString();
             StartCoroutine(ShowSequence(seq));
@@ -247,6 +247,17 @@ public class Sudoku : MonoBehaviour {
                     _board[x, y].locked = false;
                 else
                     _board[x, y].locked = true;
+            }
+        }
+    }
+
+    void TranslateAllValuesNonSetter(Matrix<int> matrix)
+    {
+        for (int y = 0; y < _board.Height; y++)
+        {
+            for (int x = 0; x < _board.Width; x++)
+            {
+                _board[x, y].number = matrix[x, y];
             }
         }
     }
