@@ -9,7 +9,7 @@ public class Sudoku : MonoBehaviour {
 	public Canvas canvas;
 	public Text feedback;
 	public float stepDuration = 10f;
-	[Range(1, 82)]public int difficulty = 40;
+	[Range(1, 82)]public int difficulty = 20;
 
 	Matrix<Cell> _board;
 	Matrix<int> _createdMatrix;
@@ -134,7 +134,7 @@ public class Sudoku : MonoBehaviour {
         {
             TranslateAllValuesNonSetter(seq[0]);
             seq.RemoveAt(0);
-            feedback.text = "Pasos: " + (maxCount - seq.Count).ToString();
+            feedback.text = "Pasos: " + (maxCount - seq.Count).ToString() + "/" + maxCount + " - " + memory + " - " + canSolve;
             StartCoroutine(ShowSequence(seq));
         }
     }
@@ -177,15 +177,21 @@ public class Sudoku : MonoBehaviour {
         ClearBoard();
         List<Matrix<int>> l = new List<Matrix<int>>();
         watchdog = 100000;
+
         GenerateValidLine(_createdMatrix, 0, 0);
-        var result =false;
         l.Add(_createdMatrix);
-        LockRandomCells();
-        ClearUnlocked(_createdMatrix);
         TranslateAllValues(_createdMatrix);
+
+        var result = RecuSolve(_createdMatrix, 0, 0, 10, l);
+
+        AllUnlocked();
+        LockRandomCells();
+        ClearUnlocked();
+
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
+
         feedback.text = "Pasos: " + l.Count + "/" + l.Count + " - " + memory + " - " + canSolve;
     }
 	void GenerateValidLine(Matrix<int> mtx, int x, int y)
@@ -210,17 +216,29 @@ public class Sudoku : MonoBehaviour {
 	}
 
 
-	void ClearUnlocked(Matrix<int> mtx)
+	void ClearUnlocked()
 	{
 		for (int i = 0; i < _board.Height; i++) {
 			for (int j = 0; j < _board.Width; j++) {
 				if (!_board [j, i].locked)
-					mtx[j,i] = Cell.EMPTY;
+                    _board[j,i].number = Cell.EMPTY;
 			}
 		}
 	}
 
-	void LockRandomCells()
+    void AllUnlocked()
+    {
+        for (int i = 0; i < _board.Height; i++)
+        {
+            for (int j = 0; j < _board.Width; j++)
+            {
+                if (_board[j, i].locked)
+                    _board[j, i].locked = false;
+            }
+        }
+    }
+
+    void LockRandomCells()
 	{
 		List<Vector2> posibles = new List<Vector2> ();
 		for (int i = 0; i < _board.Height; i++) {
