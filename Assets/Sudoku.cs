@@ -156,22 +156,20 @@ public class Sudoku : MonoBehaviour {
 
         solution.Add(_createdMatrix.Clone());
         CreateNew();
-
+        
         if (ValidBoard(_createdMatrix))
         {
             var result = RecuSolve(_createdMatrix, 0, 0, 10, solution);
             canSolve = result ? " VALID" : " INVALID";
             maxCount = solution.Count;
             StartCoroutine(ShowSequence(solution));
+            long mem = System.GC.GetTotalMemory(true);
+            memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         }
         else
         {
             feedback.text = "INVALID";
         }
-
-        long mem = System.GC.GetTotalMemory(true);
-        memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
-        
     }
 
     void CreateSudoku()
@@ -311,8 +309,8 @@ public class Sudoku : MonoBehaviour {
     void CreateNew()
     {
         //_createdMatrix = new Matrix<int>(Tests.validBoards[2]);
-        //_createdMatrix = new Matrix<int>(Tests.validBoards[Random.Range(0, Tests.validBoards.Length)]);
-        _createdMatrix = new Matrix<int>(Tests.invalidBoards[Random.Range(0, Tests.invalidBoards.Length)]);
+        _createdMatrix = new Matrix<int>(Tests.validBoards[Random.Range(0, Tests.validBoards.Length)]);
+        //_createdMatrix = new Matrix<int>(Tests.invalidBoards[Random.Range(0, Tests.invalidBoards.Length)]);
 
         TranslateAllValues(_createdMatrix);
     }
@@ -376,16 +374,33 @@ public class Sudoku : MonoBehaviour {
 
     bool ValidFila(int fila, Matrix<int> mtx)
     {
-        //List<int> takenValues = new List<int>();
-        List<int> takenValues = mtx.GetRange(0, fila, 9, fila+1);
+        List<int> takenValues = new List<int>();
+        List<int> s;
+        int aux;
 
         for (int i = 0; i < 9; i++)
         {
-            if (mtx[i, fila] != 0)
+            s = mtx.GetRange(0, fila, 9, fila + 1);
+            takenValues.Clear();
+
+            for (int j = 0; j < 9; j++)
             {
-                if (takenValues.Contains(mtx[i, fila]))
+                aux = s[0];
+                if (aux != 0)
                 {
-                    return false;
+                    if (takenValues.Contains(aux))
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        takenValues.Add(aux);
+                        s.RemoveAt(0);
+                    }
+                }
+                else
+                {
+                    s.RemoveAt(0);
                 }
             }
         }
@@ -394,15 +409,33 @@ public class Sudoku : MonoBehaviour {
 
     bool ValidCol(int col, Matrix<int> mtx)
     {
-        List<int> takenValues = mtx.GetRange(col, 0, col +1, 9);
+        List<int> takenValues = new List<int>();
+        List<int> s;
+        int aux;
 
         for (int i = 0; i < 9; i++)
         {
-            if (mtx[col, i] != 0)
+            s = mtx.GetRange(col, 0, col + 1, 9);
+            takenValues.Clear();
+
+            for (int j = 0; j < 9; j++)
             {
-                if (takenValues.Contains(mtx[col, i]))
+                aux = s[0];
+                if (aux != 0)
                 {
-                    return false;
+                    if (takenValues.Contains(aux))
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        takenValues.Add(aux);
+                        s.RemoveAt(0);
+                    }
+                }
+                else
+                {
+                    s.RemoveAt(0);
                 }
             }
         }
@@ -452,9 +485,9 @@ public class Sudoku : MonoBehaviour {
     {
         for (int i = 0; i < 9; i++)
         {
-            if (ValidFila(i, mtx) || ValidCol(i, mtx))
+            if (!ValidFila(i, mtx) || !ValidCol(i, mtx))
             {
-                return true;
+                return false;
             }
         }
 
