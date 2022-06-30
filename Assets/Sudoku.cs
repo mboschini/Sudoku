@@ -8,7 +8,7 @@ public class Sudoku : MonoBehaviour {
 	public Cell prefabCell;
 	public Canvas canvas;
 	public Text feedback;
-	public float stepDuration = 1f;
+	public float stepDuration = 10f;
 	[Range(1, 82)]public int difficulty = 40;
 
 	Matrix<Cell> _board;
@@ -28,7 +28,7 @@ public class Sudoku : MonoBehaviour {
     float increment;
     float phase;
     float samplingF = 48000;
-
+    float maxCount;
 
     void Start()
     {
@@ -130,20 +130,13 @@ public class Sudoku : MonoBehaviour {
     {
         yield return new WaitForSeconds(stepDuration);
 
-        var listMTX = seq[0];
-
-
-        for (int i = 0; i < _board.Height; i++)
+        if (seq.Count > 0)
         {
-            for (int j = 0; j < _board.Width; j++)
-            {
-                _board[j, i].number = listMTX[i,j];
-            }
-        }
-
-        if(seq.Count>0)
+            TranslateAllValues(seq[0]);
             seq.RemoveAt(0);
-
+            feedback.text = "Pasos: " + (maxCount - seq.Count).ToString();
+            StartCoroutine(ShowSequence(seq));
+        }
     }
 
 	void Update () {
@@ -168,6 +161,8 @@ public class Sudoku : MonoBehaviour {
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
+
+        maxCount = solution.Count;
 
         StartCoroutine(ShowSequence(solution));
 
@@ -281,7 +276,7 @@ public class Sudoku : MonoBehaviour {
     }
     void CreateNew()
     {
-        _createdMatrix = new Matrix<int>(Tests.validBoards[5]);
+        _createdMatrix = new Matrix<int>(Tests.validBoards[0]);
         TranslateAllValues(_createdMatrix);
     }
 

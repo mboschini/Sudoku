@@ -55,6 +55,7 @@ public class Matrix<T> : IEnumerable<T>
                 _board[j, i] = item;
             }
         }
+
     }
 
     //Todos los parametros son INCLUYENTES*
