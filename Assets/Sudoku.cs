@@ -8,8 +8,8 @@ public class Sudoku : MonoBehaviour {
 	public Cell prefabCell;
 	public Canvas canvas;
 	public Text feedback;
-	public float stepDuration = 10f;
-	[Range(1, 82)]public int difficulty = 20;
+	public float stepDuration = 0.1f;
+	[Range(1, 82)]public int difficulty = 5;
 
 	Matrix<Cell> _board;
 	Matrix<int> _createdMatrix;
@@ -128,7 +128,7 @@ public class Sudoku : MonoBehaviour {
 	//IMPLEMENTAR - punto 3
 	IEnumerator ShowSequence(List<Matrix<int>> seq)
     {
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(stepDuration);
 
         if (seq.Count > 0)
         {
@@ -143,8 +143,8 @@ public class Sudoku : MonoBehaviour {
 		if(Input.GetKeyDown(KeyCode.R) || Input.GetMouseButtonDown(1))
             SolvedSudoku();
         else if(Input.GetKeyDown(KeyCode.C) || Input.GetMouseButtonDown(0)) 
-            CreateSudoku();	
-	}
+            CreateSudoku();          
+    }
 
 	//modificar lo necesario para que funcione.
     void SolvedSudoku()
@@ -156,17 +156,22 @@ public class Sudoku : MonoBehaviour {
 
         solution.Add(_createdMatrix.Clone());
         CreateNew();
-        var result = RecuSolve(_createdMatrix, 0, 0, 10, solution);
+
+        if (ValidBoard(_createdMatrix))
+        {
+            var result = RecuSolve(_createdMatrix, 0, 0, 10, solution);
+            canSolve = result ? " VALID" : " INVALID";
+        }
+        else
+        {
+            canSolve = " INVALID";
+        }
 
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
-        canSolve = result ? " VALID" : " INVALID";
-
+        
         maxCount = solution.Count;
-
         StartCoroutine(ShowSequence(solution));
-
-        Debug.Log(solution.Count);
     }
 
     void CreateSudoku()
@@ -306,6 +311,7 @@ public class Sudoku : MonoBehaviour {
     void CreateNew()
     {
         _createdMatrix = new Matrix<int>(Tests.validBoards[0]);
+        //_createdMatrix = new Matrix<int>(Tests.invalidBoards[0]);
         TranslateAllValues(_createdMatrix);
     }
 
@@ -326,8 +332,6 @@ public class Sudoku : MonoBehaviour {
                 else if(i == y && j != x) fila.Add(mtx[j,i]);
             }
         }
-
-
 
         cuadrante.x = (int)(x / 3);
 
@@ -366,5 +370,108 @@ public class Sudoku : MonoBehaviour {
             if (list[i] != 0) aux.Add(list[i]);
         }
         return aux;
+    }
+
+    bool ValidFila(int fila, Matrix<int> mtx)
+    {
+        //List<int> takenValues = new List<int>();
+        List<int> takenValues = mtx.GetRange(0, fila, 9, fila+1);
+
+        for (int i = 0; i < 9; i++)
+        {
+            if (mtx[i, fila] != 0)
+            {
+                if (takenValues.Contains(mtx[i, fila]))
+                {
+                    return false;
+                }
+                else
+                {
+                    //takenValues.Add(mtx[i, fila]);
+                }
+            }
+        }
+        return true;
+    }
+
+    bool ValidCol(int col, Matrix<int> mtx)
+    {
+        //List<int> takenValues = new List<int>();
+
+        List<int> takenValues = mtx.GetRange(col, 0, col +1, 9);
+
+        for (int i = 0; i < 9; i++)
+        {
+            if (mtx[col, i] != 0)
+            {
+                if (takenValues.Contains(mtx[col, i]))
+                {
+                    return false;
+                }
+                else
+                {
+                    takenValues.Add(mtx[col, i]);
+                }
+            }
+        }
+        return true;
+    }
+
+    bool ValidCuads(Matrix<int> mtx) 
+    {
+        List<int> s = new List<int>();
+        List<int> takenValues = new List<int>();
+        int aux;
+
+        for (int fila = 0; fila < 9; fila = fila + 3)
+        {
+            for (int col = 0; col < 9; col = col + 3)
+            {
+                s = mtx.GetRange(col, fila, col+3, fila + 3);
+                takenValues.Clear();
+                for (int i = 0; i < 9; i++)
+                {
+                    aux = s[0];
+                    if (aux != 0)
+                    {
+                        if (takenValues.Contains(aux))
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            takenValues.Add(aux);
+                            s.RemoveAt(0);
+                        }
+                    }
+                    else
+                    {
+                        s.RemoveAt(0);
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+
+    bool ValidBoard(Matrix<int> mtx)
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            if (ValidFila(i, mtx) || ValidCol(i, mtx))
+            {
+                return false;
+            }
+        }
+
+        if (ValidCuads(mtx))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 }
